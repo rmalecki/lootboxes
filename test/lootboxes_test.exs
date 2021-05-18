@@ -3,16 +3,19 @@ defmodule LootboxesTest do
   doctest Lootboxes
 
   test "pick random rarities" do
-    {pack, _history} =
+    {pack, history} =
       Lootboxes.create_rarities(
         [89, 9, 2],
         [],
         1000
       )
 
-    #0..2 |> Enum.map(fn r ->
-    #  Enum.count(history, &(&1 == r)) end)
-    #  |> inspect() |> IO.puts()
+    0..2
+    |> Enum.map(fn r ->
+      Enum.count(history, &(&1 == r))
+    end)
+    |> inspect()
+    |> IO.puts()
 
     assert Enum.all?(pack, fn x -> x >= 0 and x < 4 end)
   end

@@ -3,19 +3,6 @@ defmodule Lootboxes do
   Documentation for `Lootboxes`.
   """
 
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Lootboxes.hello()
-      :world
-
-  """
-  def hello do
-    :world
-  end
-
   def create_rarities(probabilities, history, count) do
     probabilities = normalize(probabilities)
 
@@ -33,24 +20,30 @@ defmodule Lootboxes do
   defp pick_rarity(history, probabilities) do
     x = :rand.uniform()
 
-    # adjust probability depending on history
+    # boost probabilities if unlucky historic picks
     adjusted_probabilities =
       probabilities
       |> Enum.zip(0..9)
       |> Enum.map(fn {p, r} ->
-        expected_phase = 1 / p - 1
-        # historic picks without any of that rarity
-        historic_phase = picks_without_rarity(history, r)
-        if historic_phase > expected_phase, do: 1.0, else: p
-        min(1, p + max(0, 1.0 - p) *
-          :math.pow(max(0, historic_phase - expected_phase) / expected_phase, 5))
+        expected_picks_without_rarity = 1 / p - 1
+
+        min(
+          1,
+          p +
+            max(0, 1.0 - p) *
+              :math.pow(
+                max(0, picks_without_rarity(history, r) - expected_picks_without_rarity) /
+                  expected_picks_without_rarity,
+                5
+              )
+        )
       end)
 
-    adjusted_probabilities = adjusted_probabilities
-      |> Enum.reverse() |> prioritize() |> Enum.reverse()
+    adjusted_probabilities =
+      adjusted_probabilities |> Enum.reverse() |> prioritize() |> Enum.reverse()
 
     r =
-      Enum.reduce_while(probabilities, {0, 0}, fn p, {n, p_total} ->
+      Enum.reduce_while(adjusted_probabilities, {0, 0}, fn p, {n, p_total} ->
         if x < p_total + p, do: {:halt, n}, else: {:cont, {n + 1, p_total + p}}
       end)
 
