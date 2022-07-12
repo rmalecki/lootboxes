@@ -17,6 +17,23 @@ defmodule Lootboxes do
     history |> Enum.take_while(&(&1 != r)) |> Enum.count()
   end
 
+  def picks_for_rarity(history, r) do
+    Enum.count(history, &(&1 == r))
+  end
+
+  defp calc_adjusted_probability([], p, _r), do: p
+
+  defp calc_adjusted_probability(history, p, r) do
+    expected_picks_for_rarity = Enum.count(history) * p
+
+    min(
+      1,
+      p +
+        2 * max(0, expected_picks_for_rarity - picks_for_rarity(history, r)) /
+          expected_picks_for_rarity
+    )
+  end
+
   defp pick_rarity(history, probabilities) do
     x = :rand.uniform()
 
@@ -25,18 +42,7 @@ defmodule Lootboxes do
       probabilities
       |> Enum.zip(0..9)
       |> Enum.map(fn {p, r} ->
-        expected_picks_without_rarity = 1 / p - 1
-
-        min(
-          1,
-          p +
-            max(0, 1.0 - p) *
-              :math.pow(
-                max(0, picks_without_rarity(history, r) - expected_picks_without_rarity) /
-                  expected_picks_without_rarity,
-                5
-              )
-        )
+        calc_adjusted_probability(history, p, r)
       end)
 
     adjusted_probabilities =

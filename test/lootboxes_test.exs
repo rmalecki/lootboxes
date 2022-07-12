@@ -2,15 +2,19 @@ defmodule LootboxesTest do
   use ExUnit.Case
   doctest Lootboxes
 
+  @char [65, 66, 67]
+
   test "pick random rarities" do
     {pack, history} =
       Lootboxes.create_rarities(
-        [89, 9, 2],
+        [9, 1],
         [],
         1000
       )
 
-    0..2
+    pack |> Enum.map(&Enum.at(@char, &1)) |> inspect() |> IO.puts()
+
+    0..1
     |> Enum.map(fn r ->
       Enum.count(history, &(&1 == r))
     end)
